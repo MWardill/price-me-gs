@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+dev.env
+
+# Claude Code — local settings and ephemeral state (not shared)
+.claude/settings.local.json
+.claude/todos.json
+
+games-input.json
+prices-output.json

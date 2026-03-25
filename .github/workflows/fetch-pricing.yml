@@ -1,0 +1,37 @@
+# name: Fetch eBay Pricing
+
+# on:
+#   schedule:
+#     # Runs weekly on Mondays at 08:00 UTC
+#     - cron: "0 8 * * 1"
+#   workflow_dispatch: # allows manual trigger from GitHub UI
+
+# jobs:
+#   fetch:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - uses: actions/checkout@v4
+
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: "22"
+#           cache: "npm"
+
+#       - name: Install dependencies
+#         run: npm ci
+
+#       - name: Type check
+#         run: npm run typecheck
+
+#       - name: Lint
+#         run: npm run lint
+
+#       - name: Test
+#         run: npm test
+
+#       - name: Run pricing fetch
+#         run: npm start
+#         env:
+#           EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+#           EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}

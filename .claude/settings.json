@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)"
+    ],
+    "additionalDirectories": [
+      "c:\\mw\\price-me-gs\\price-me-gs"
+    ]
+  }
+}
