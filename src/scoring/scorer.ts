@@ -66,6 +66,25 @@ function parseGeminiResponse(responseText: string): GeminiScoredItem[] {
     throw new Error('Gemini response is not a JSON array');
   }
 
+  const validConditions = new Set(['cib', 'loose', 'sealed', 'other']);
+  for (const [i, item] of parsed.entries()) {
+    if (typeof item !== 'object' || item === null) {
+      throw new Error(`Gemini response item ${i} is not an object`);
+    }
+    if (typeof item.itemId !== 'string') {
+      throw new Error(`Gemini response item ${i} missing string "itemId"`);
+    }
+    if (typeof item.relevant !== 'boolean') {
+      throw new Error(`Gemini response item ${i} missing boolean "relevant"`);
+    }
+    if (!validConditions.has(item.condition)) {
+      throw new Error(`Gemini response item ${i} has invalid "condition": ${item.condition}`);
+    }
+    if (typeof item.relevance !== 'number') {
+      throw new Error(`Gemini response item ${i} missing numeric "relevance"`);
+    }
+  }
+
   return parsed as GeminiScoredItem[];
 }
 
@@ -121,7 +140,7 @@ export async function scoreListings(
       continue;
     }
 
-    if (scored.relevance < 5) {
+    if (scored.relevance < 7) {
       continue;
     }
 
