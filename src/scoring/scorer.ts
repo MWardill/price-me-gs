@@ -57,7 +57,7 @@ function buildPrompt(game: GameRecord, listings: EbayListing[]): string {
 From the listings below, return ONLY the ones that meet ALL of these criteria:
 1. The listing is actually for "${game.title}" on "${game.console}" (not a different game, sequel, different platform, or just a case/manual/accessory)
 2. The listing is CIB (Complete in Box: game + box + manual)
-3. The relevance score is 7 or higher (on a 1-10 scale where 10 = perfect match)
+3. The relevance score is 6 or higher (on a 1-10 scale where 10 = perfect match)
 
 Do NOT include listings that are:
 - A different game (e.g. "Sonic Adventure 2" when looking for "Sonic Adventure")
@@ -145,8 +145,8 @@ export async function scoreListings(
       continue; // Gemini returned an itemId we didn't send — skip
     }
 
-    if (scored.relevance < 7) {
-      continue; // Belt-and-braces: prompt asks for >= 7 but double-check
+    if (scored.relevance < 6) {
+      continue; // Belt-and-braces: prompt asks for >= 6 but double-check
     }
 
     results.push({
