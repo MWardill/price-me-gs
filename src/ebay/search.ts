@@ -5,6 +5,10 @@ export interface EbayListing {
   title: string;
   price: number;
   currency: string;
+  itemWebUrl?: string;
+  imageUrl?: string;
+  shortDescription?: string;
+  condition?: string;
 }
 
 interface EbayItemSummary {
@@ -14,6 +18,12 @@ interface EbayItemSummary {
     value: string;
     currency: string;
   };
+  image?: {
+    imageUrl: string;
+  };
+  itemWebUrl?: string;
+  shortDescription?: string;
+  condition?: string;
 }
 
 interface EbaySearchResponse {
@@ -29,6 +39,7 @@ export async function searchListings(
     filter: 'buyingOptions:{FIXED_PRICE},itemLocationCountry:GB',
     limit: '50',
     marketplace_id: 'EBAY_GB',
+    fieldgroups: 'EXTENDED',
   });
 
   const response = await fetch(`${SEARCH_URL}?${params.toString()}`, {
@@ -55,5 +66,9 @@ export async function searchListings(
       title: item.title,
       price: parseFloat(item.price!.value),
       currency: item.price!.currency,
+      itemWebUrl: item.itemWebUrl,
+      imageUrl: item.image?.imageUrl,
+      shortDescription: item.shortDescription,
+      condition: item.condition,
     }));
 }

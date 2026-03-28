@@ -20,6 +20,8 @@ async function main(): Promise<void> {
 
   const clientId = getRequiredEnv('EBAY_CLIENT_ID');
   const clientSecret = getRequiredEnv('EBAY_CLIENT_SECRET');
+  const geminiApiKey = getRequiredEnv('GEMINI_API_KEY');
+  const geminiModel = process.env['GEMINI_MODEL'] ?? 'gemini-3-flash-preview';
 
   const inputFile = process.env['INPUT_FILE'] ?? join('tasks', 'games-input.json');
   const outputFile = process.env['OUTPUT_FILE'] ?? join('tasks', 'prices-output.json');
@@ -43,7 +45,7 @@ async function main(): Promise<void> {
       const listings = await searchListings(query, accessToken);
       console.log(`  Found ${listings.length} listing(s)`);
 
-      const scored = await scoreListings(game, listings);
+      const scored = await scoreListings(game, listings, geminiApiKey, geminiModel);
       console.log(`  ${scored.length} listing(s) after scoring`);
 
       const price = calculatePrice(scored);

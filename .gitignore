@@ -13,3 +13,5 @@ prices-output.json
 # Ralph TUI — runtime state and session files
 .ralph-tui/session.json
 .ralph-tui/*.log
+
+.claude/
