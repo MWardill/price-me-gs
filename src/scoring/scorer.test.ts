@@ -72,12 +72,12 @@ describe('scoreListings (Gemini AI)', () => {
     expect(result[0].currency).toBe('GBP');
   });
 
-  it('filters out items with relevance below 7 even if Gemini returns them', async () => {
+  it('filters out items with relevance below 6 even if Gemini returns them', async () => {
     const listings = [makeListing(0)];
 
     mockGenerateContent.mockResolvedValueOnce({
       text: JSON.stringify([
-        { itemId: 'item0', condition: 'cib', relevance: 6 },
+        { itemId: 'item0', condition: 'cib', relevance: 5 },
       ]),
     });
 
