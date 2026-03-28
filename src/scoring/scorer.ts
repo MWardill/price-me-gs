@@ -1,4 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
+import type { Schema } from '@google/genai';
 import type { EbayListing } from '../ebay/search.js';
 import type { GameRecord } from '../dal/types.js';
 
@@ -9,10 +10,30 @@ export interface ScoredListing extends EbayListing {
 
 interface GeminiScoredItem {
   itemId: string;
-  relevant: boolean;
-  condition: 'cib' | 'loose' | 'sealed' | 'other';
+  condition: 'cib';
   relevance: number;
 }
+
+/** Schema for the Gemini JSON response — only CIB + relevant items returned */
+const responseSchema: Schema = {
+  type: Type.ARRAY,
+  items: {
+    type: Type.OBJECT,
+    properties: {
+      itemId: { type: Type.STRING, description: 'The itemId of the listing' },
+      condition: {
+        type: Type.STRING,
+        enum: ['cib'],
+        description: 'Must be "cib" (complete in box)',
+      },
+      relevance: {
+        type: Type.INTEGER,
+        description: 'Relevance score from 1-10',
+      },
+    },
+    required: ['itemId', 'condition', 'relevance'],
+  },
+};
 
 function buildPrompt(game: GameRecord, listings: EbayListing[]): string {
   const listingLines = listings
@@ -33,40 +54,31 @@ function buildPrompt(game: GameRecord, listings: EbayListing[]): string {
 
   return `You are evaluating eBay listings for the video game "${game.title}" on "${game.console}".
 
-For each listing below, determine:
-1. Is this listing actually for "${game.title}" on "${game.console}"? (not a different game, not a different platform, not just a case/manual/accessory)
-2. What is the condition? One of: "cib" (complete: game + box + manual), "loose" (game only, no box/manual), "sealed" (factory sealed or graded), "other" (bundle, accessories only, manual only, case only, etc.)
-3. A relevance score from 1-10 (10 = perfect match for the exact game on the exact platform).
+From the listings below, return ONLY the ones that meet ALL of these criteria:
+1. The listing is actually for "${game.title}" on "${game.console}" (not a different game, sequel, different platform, or just a case/manual/accessory)
+2. The listing is CIB (Complete in Box: game + box + manual)
+3. The relevance score is 7 or higher (on a 1-10 scale where 10 = perfect match)
 
-Rules:
-- A listing for a sequel or different version of the game (e.g. "Sonic Adventure 2" when looking for "Sonic Adventure") is NOT relevant.
-- A listing that is a console bundle containing the game is "other".
-- If the listing title says "complete" or mentions manual and case/box, it is likely "cib".
-- If the listing title says "disc only", "cart only", or has no mention of box/manual, it is likely "loose".
-- If the listing says "sealed", "brand new sealed", or "graded", it is "sealed".
-- If unsure about condition, default to "other".
+Do NOT include listings that are:
+- A different game (e.g. "Sonic Adventure 2" when looking for "Sonic Adventure")
+- Loose (disc/cart only, no box or manual)
+- Sealed or graded
+- A console bundle, accessories only, manual only, or case only
+- Unclear or uncertain condition (when in doubt, exclude it)
+
+If NO listings meet the criteria, return an empty array [].
 
 Listings:
-${listingLines}
-
-Respond with ONLY a JSON array, no other text or markdown formatting:
-[{"itemId": "...", "relevant": true, "condition": "cib", "relevance": 9}, ...]`;
+${listingLines}`;
 }
 
 function parseGeminiResponse(responseText: string): GeminiScoredItem[] {
-  // Strip markdown code fences if present
-  let cleaned = responseText.trim();
-  if (cleaned.startsWith('```')) {
-    cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
-  }
-
-  const parsed: unknown = JSON.parse(cleaned);
+  const parsed: unknown = JSON.parse(responseText);
 
   if (!Array.isArray(parsed)) {
     throw new Error('Gemini response is not a JSON array');
   }
 
-  const validConditions = new Set(['cib', 'loose', 'sealed', 'other']);
   for (const [i, item] of parsed.entries()) {
     if (typeof item !== 'object' || item === null) {
       throw new Error(`Gemini response item ${i} is not an object`);
@@ -74,10 +86,7 @@ function parseGeminiResponse(responseText: string): GeminiScoredItem[] {
     if (typeof item.itemId !== 'string') {
       throw new Error(`Gemini response item ${i} missing string "itemId"`);
     }
-    if (typeof item.relevant !== 'boolean') {
-      throw new Error(`Gemini response item ${i} missing boolean "relevant"`);
-    }
-    if (!validConditions.has(item.condition)) {
+    if (item.condition !== 'cib') {
       throw new Error(`Gemini response item ${i} has invalid "condition": ${item.condition}`);
     }
     if (typeof item.relevance !== 'number') {
@@ -90,7 +99,8 @@ function parseGeminiResponse(responseText: string): GeminiScoredItem[] {
 
 /**
  * Scores listings using Gemini AI to determine relevance and condition.
- * Only CIB (Complete in Box) listings with relevance >= 5 are kept.
+ * Only CIB (Complete in Box) listings with relevance >= 7 are returned.
+ * Uses structured output (JSON schema) for faster, more reliable responses.
  * Throws if Gemini fails — no fallback to avoid bad pricing data.
  */
 export async function scoreListings(
@@ -111,6 +121,10 @@ export async function scoreListings(
   const response = await ai.models.generateContent({
     model,
     contents: prompt,
+    config: {
+      responseMimeType: 'application/json',
+      responseSchema,
+    },
   });
 
   const responseText = response.text;
@@ -123,7 +137,6 @@ export async function scoreListings(
   // Build a lookup map of the original listings by itemId
   const listingMap = new Map(listings.map((l) => [l.itemId, l]));
 
-  // Filter: keep only CIB, relevant, and relevance >= 5
   const results: ScoredListing[] = [];
 
   for (const scored of scoredItems) {
@@ -132,16 +145,8 @@ export async function scoreListings(
       continue; // Gemini returned an itemId we didn't send — skip
     }
 
-    if (!scored.relevant) {
-      continue;
-    }
-
-    if (scored.condition !== 'cib') {
-      continue;
-    }
-
     if (scored.relevance < 7) {
-      continue;
+      continue; // Belt-and-braces: prompt asks for >= 7 but double-check
     }
 
     results.push({
