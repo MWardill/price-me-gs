@@ -3,7 +3,7 @@ name: Fetch eBay Pricing
 on:
   schedule:
     # Runs every 15 minutes to process chunks of the game collection
-    - cron: "7,22,37,52 * * * *"
+    #- cron: "7,22,37,52 * * * *"
   workflow_dispatch: # allows manual trigger from GitHub UI
 
 jobs:

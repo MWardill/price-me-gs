@@ -1,0 +1,35 @@
+name: Deploy to Google Cloud Run Job
+
+on:
+  push:
+    branches:
+      - main # Deploys automatically whenever you push to main
+  workflow_dispatch: # Allows manual deployment from the Actions tab
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 1. Authenticate with Google Cloud using your new Secret
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      # 2. Set up the Google Cloud command-line tool
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # 3. Deploy the code directly from source!
+      - name: Deploy Cloud Run Job
+        run: |-
+          gcloud run jobs deploy fetch-ebay-pricing \
+            --source . \
+            --region us-central1 \
+            --set-env-vars=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},DATABASE_URL=${{ secrets.DATABASE_URL }},EBAY_CLIENT_ID=${{ secrets.EBAY_CLIENT_ID }},EBAY_CLIENT_SECRET=${{ secrets.EBAY_CLIENT_SECRET }} \
+            --max-retries 0 \
+            --task-timeout 60m
