@@ -26,13 +26,13 @@ jobs:
 
       # 3. Deploy the code directly from source!
       - name: Deploy Cloud Run Job
-        run: |-
-          gcloud run jobs deploy fetch-ebay-pricing \
-            --quiet \
-            --source . \
-            --region us-central1 \
-            --memory 512Mi \
-            --cpu 1 \
-            --set-env-vars=GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},DATABASE_URL=${{ secrets.DATABASE_URL }},EBAY_CLIENT_ID=${{ secrets.EBAY_CLIENT_ID }},EBAY_CLIENT_SECRET=${{ secrets.EBAY_CLIENT_SECRET }} \
-            --max-retries 0 \
-            --task-timeout 60m
+        run: >-
+          gcloud run jobs deploy fetch-ebay-pricing
+          --quiet
+          --source .
+          --region us-central1
+          --memory 512Mi
+          --cpu 1
+          --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},DATABASE_URL=${{ secrets.DATABASE_URL }},EBAY_CLIENT_ID=${{ secrets.EBAY_CLIENT_ID }},EBAY_CLIENT_SECRET=${{ secrets.EBAY_CLIENT_SECRET }}"
+          --max-retries 0
+          --task-timeout 60m
