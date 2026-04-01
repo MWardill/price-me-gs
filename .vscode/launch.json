@@ -13,6 +13,19 @@
       "cwd": "${workspaceFolder}",
       "sourceMaps": true,
       "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "Debug: test-game",
+      "runtimeArgs": [
+        "--env-file=${workspaceFolder}/dev.env",
+        "--import=tsx"
+      ],
+      "args": ["${workspaceFolder}/src/test-game.ts", "--id", "1576"],
+      "cwd": "${workspaceFolder}",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**", "**/node_modules/**"]
     }
   ]
 }

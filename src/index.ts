@@ -55,50 +55,31 @@ async function main(): Promise<void> {
     const query = `${game.title} ${game.console}`;
     console.log(`Processing: ${query}`);
 
-    let result: PriceResult;
+    // Small delay to avoid eBay rate limiting
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    try {
-      // Small delay to avoid eBay rate limiting
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    const listings = await searchListings(query, accessToken);
+    console.log(`  Found ${listings.length} listing(s)`);
 
-      const listings = await searchListings(query, accessToken);
-      console.log(`  Found ${listings.length} listing(s)`);
+    const scored = await scoreListings(game, listings, geminiApiKey, geminiModel);
+    console.log(`  ${scored.length} listing(s) after scoring`);
 
-      const scored = await scoreListings(game, listings, geminiApiKey, geminiModel);
-      console.log(`  ${scored.length} listing(s) after scoring`);
+    const price = calculatePrice(scored);
+    const calculatedAt = new Date().toISOString().slice(0, 10);
 
-      const price = calculatePrice(scored);
-      const calculatedAt = new Date().toISOString().slice(0, 10);
+    const result: PriceResult = {
+      id: game.id,
+      title: game.title,
+      console: game.console,
+      price,
+      currency: 'GBP',
+      calculatedAt,
+      sampleSize: scored.length,
+    };
 
-      result = {
-        id: game.id,
-        title: game.title,
-        console: game.console,
-        price,
-        currency: 'GBP',
-        calculatedAt,
-        sampleSize: scored.length,
-      };
+    console.log(`  Price: ${price != null ? `£${price}` : 'insufficient data'}`);
 
-      console.log(`  Price: ${price != null ? `£${price}` : 'insufficient data'}`);
-    } catch (err) {
-      console.error(`  Error processing "${query}":`, err);
-      result = {
-        id: game.id,
-        title: game.title,
-        console: game.console,
-        price: null,
-        currency: 'GBP',
-        calculatedAt: new Date().toISOString().slice(0, 10),
-        sampleSize: 0,
-      };
-    }
-
-    try {
-      await handler.handleResult(result);
-    } catch (err) {
-      console.error(`  Error handling result for "${query}":`, err);
-    }
+    await handler.handleResult(result);
   }
 
   await handler.finalize();

@@ -33,7 +33,7 @@ For each game, the price is calculated as:
 3. **Mean of subset** — average those prices and round to 2 decimal places
 4. Returns `null` if fewer than 3 listings survive filtering (insufficient data)
 
-This targets the lower end of the market rather than the midpoint, reflecting real buying opportunity.
+This targets the lower end of the market rather than the midpoint - I think this reflects the true "value" of the collection more than the mean in any case, at least in a practical sense for what I am trying to track.
 
 ---
 
