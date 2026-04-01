@@ -33,6 +33,6 @@ jobs:
           --region us-central1
           --memory 512Mi
           --cpu 1
-          --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},DATABASE_URL=${{ secrets.DATABASE_URL }},EBAY_CLIENT_ID=${{ secrets.EBAY_CLIENT_ID }},EBAY_CLIENT_SECRET=${{ secrets.EBAY_CLIENT_SECRET }},RUNS_PER_WEEK=${{ secrets.RUNS_PER_WEEK }},USER_EMAIL=${{ secrets.USER_EMAIL }},USE_DB=true"
+          --set-env-vars="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }},DATABASE_URL=${{ secrets.DATABASE_URL }},EBAY_CLIENT_ID=${{ secrets.EBAY_CLIENT_ID }},EBAY_CLIENT_SECRET=${{ secrets.EBAY_CLIENT_SECRET }},RUNS_PER_WEEK=${{ secrets.RUNS_PER_WEEK }},USER_EMAIL=${{ secrets.USER_EMAIL }},USE_DB=true,GEMINI_MODEL=${{ secrets.GEMINI_MODEL }}"
           --max-retries 0
           --task-timeout 60m
